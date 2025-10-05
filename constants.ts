@@ -1,0 +1,9 @@
+export const CLASSES = ['V', 'VI', 'VII', 'VIII', 'IX'];
+export const SECTIONS = ['A', 'B', 'C'];
+export const EXAM_DURATION_MINUTES = 20;
+export const TOTAL_QUESTIONS = 20;
+export const DB_STUDENTS_KEY = 'gemini_exam_students';
+export const DB_RESULTS_KEY = 'gemini_exam_results';
+export const DB_QUESTIONS_KEY = 'gemini_exam_questions';
+export const ADMIN_USERNAME = 'admin';
+export const ADMIN_PASSWORD = 'password';

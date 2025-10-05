@@ -1,0 +1,5 @@
+{
+  "name": "Exam Portal",
+  "description": "An intelligent exam portal for students from Class V to IX. It features automatic question generation using the Gemini API, a timed exam interface, and an admin panel to review student registrations and results.",
+  "requestFramePermissions": []
+}
