@@ -14,20 +14,17 @@ const Header: React.FC = () => {
                     <div className="flex items-center">
                         <div className="flex-shrink-0">
                             <h1 className="text-white text-xl font-bold">
-                                🚀Exam Portal
+                                🚀 পরীক্ষা পোর্টাল
                             </h1>
                         </div>
                     </div>
                     <nav className="hidden md:block">
                         <div className="ml-10 flex items-baseline space-x-4">
                             <NavLink to="/" className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClass : inactiveLinkClass}`}>
-                                Home
+                                হোম
                             </NavLink>
                             <NavLink to="/student" className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClass : inactiveLinkClass}`}>
-                                Student Portal
-                            </NavLink>
-                            <NavLink to="/admin" className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClass : inactiveLinkClass}`}>
-                                Admin Panel
+                                ছাত্র ছাত্রী পোর্টাল
                             </NavLink>
                         </div>
                     </nav>

@@ -18,24 +18,23 @@ const ShieldIcon: React.FC = () => (
 const HomePage: React.FC = () => {
     return (
         <div className="text-center p-8">
-            <h2 className="text-4xl font-extrabold text-slate-800 mb-4">Welcome to the Future of Examinations</h2>
+            <h2 className="text-4xl font-extrabold text-slate-800 mb-4">পরীক্ষার ভবিষ্যতে স্বাগতম</h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto mb-12">
-                An intelligent platform powered by Google's Gemini API for dynamic question generation and seamless test-taking.
-                Choose your portal to get started.
+                গতিশীল প্রশ্ন তৈরি এবং নির্বিঘ্ন পরীক্ষা দেওয়ার জন্য Google-এর Gemini API দ্বারা চালিত একটি বুদ্ধিমান প্ল্যাটফর্ম। শুরু করতে আপনার পোর্টাল বেছে নিন।
             </p>
             <div className="flex flex-col md:flex-row justify-center items-center gap-8">
                 <Link to="/student" className="group w-full md:w-80">
                     <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300 border border-slate-200">
                         <UserIcon />
-                        <h3 className="text-2xl font-bold text-slate-800 mt-4">Student Portal</h3>
-                        <p className="text-slate-500 mt-2">Register, take your exam, and view your results instantly.</p>
+                        <h3 className="text-2xl font-bold text-slate-800 mt-4">ছাত্র ছাত্রী পোর্টাল</h3>
+                        <p className="text-slate-500 mt-2">নিবন্ধন করুন, আপনার পরীক্ষা দিন এবং অবিলম্বে আপনার ফলাফল দেখুন।</p>
                     </div>
                 </Link>
                 <Link to="/admin" className="group w-full md:w-80">
                     <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300 border border-slate-200">
                         <ShieldIcon />
-                        <h3 className="text-2xl font-bold text-slate-800 mt-4">Admin Panel</h3>
-                        <p className="text-slate-500 mt-2">Monitor student registrations and exam performance.</p>
+                        <h3 className="text-2xl font-bold text-slate-800 mt-4">অ্যাডমিন প্যানেল</h3>
+                        <p className="text-slate-500 mt-2">ছাত্র ছাত্রী নিবন্ধন এবং পরীক্ষার পারফরম্যান্স নিরীক্ষণ করুন।</p>
                     </div>
                 </Link>
             </div>

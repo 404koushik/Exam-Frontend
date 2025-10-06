@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import type { Student, ExamResult, Question } from '../types';
 import * as apiService from '../services/apiService';
 import Spinner from '../components/Spinner';
-import { ADMIN_USERNAME, ADMIN_PASSWORD, CLASSES, TOTAL_QUESTIONS } from '../constants';
+import { ADMIN_USERNAME, ADMIN_PASSWORD, CLASSES, SECTIONS, TOTAL_QUESTIONS } from '../constants';
 
 type AdminView = 'students' | 'results' | 'questions';
 type SortKey<T> = keyof T;
@@ -74,10 +74,14 @@ const useSortableData = <T extends object,>(items: T[], config: SortConfig<T> | 
         let sortableItems = [...items];
         if (sortConfig !== null) {
             sortableItems.sort((a, b) => {
-                if (a[sortConfig.key] < b[sortConfig.key]) {
+                const aValue = a[sortConfig.key];
+                const bValue = b[sortConfig.key];
+                if (aValue === null || aValue === undefined) return 1;
+                if (bValue === null || bValue === undefined) return -1;
+                if (aValue < bValue) {
                     return sortConfig.direction === 'asc' ? -1 : 1;
                 }
-                if (a[sortConfig.key] > b[sortConfig.key]) {
+                if (aValue > bValue) {
                     return sortConfig.direction === 'asc' ? 1 : -1;
                 }
                 return 0;
@@ -123,13 +127,22 @@ const QuestionEditor: React.FC<{
         options: ['', '', '', ''],
         correctAnswerIndex: 0,
     });
+    const [id, setId] = useState<string | null>(null);
 
     useEffect(() => {
         if (question) {
+            setId(question.id);
             setFormData({
                 question: question.question,
-                options: [...question.options],
+                options: [...question.options, ...Array(4 - question.options.length).fill('')], // Ensure 4 options
                 correctAnswerIndex: question.correctAnswerIndex,
+            });
+        } else {
+            setId(null);
+             setFormData({
+                question: '',
+                options: ['', '', '', ''],
+                correctAnswerIndex: 0,
             });
         }
     }, [question]);
@@ -147,13 +160,13 @@ const QuestionEditor: React.FC<{
             alert('Please fill out the question and all four options.');
             return;
         }
-        onSave({ id: question?.id || '', ...formData });
+        onSave({ id: id || '', ...formData });
     };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white p-8 rounded-lg shadow-2xl max-w-2xl w-full">
-                <h3 className="text-xl font-bold text-slate-800 mb-6">{question ? 'Edit Question' : 'Add New Question'}</h3>
+            <div className="bg-white p-8 rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <h3 className="text-xl font-bold text-slate-800 mb-6">{id ? 'Edit Question' : 'Add New Question'}</h3>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-slate-700">Question Text</label>
@@ -212,9 +225,45 @@ const AdminPanel: React.FC = () => {
     const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    
+    // Search queries
+    const [studentSearchQuery, setStudentSearchQuery] = useState('');
+    const [resultSearchQuery, setResultSearchQuery] = useState('');
 
-    const { items: sortedStudents, requestSort: requestStudentSort, sortConfig: studentSortConfig } = useSortableData(students, { key: 'registeredAt', direction: 'desc' });
-    const { items: sortedResults, requestSort: requestResultSort, sortConfig: resultSortConfig } = useSortableData(results, { key: 'submittedAt', direction: 'desc' });
+    // Filters for results view
+    const [filterClass, setFilterClass] = useState('all');
+    const [filterStatus, setFilterStatus] = useState<'all' | 'Pass' | 'Fail'>('all');
+    
+    // Filters for students view
+    const [studentFilterClass, setStudentFilterClass] = useState('all');
+    const [studentFilterSection, setStudentFilterSection] = useState('all');
+
+    const filteredStudents = useMemo(() => {
+        const lowercasedQuery = studentSearchQuery.toLowerCase();
+        return students.filter(student => {
+            const classMatch = studentFilterClass === 'all' || student.className === studentFilterClass;
+            const sectionMatch = studentFilterSection === 'all' || student.section === studentFilterSection;
+            const searchMatch = !lowercasedQuery ||
+                student.name.toLowerCase().includes(lowercasedQuery) ||
+                student.rollNumber.toLowerCase().includes(lowercasedQuery);
+            return classMatch && sectionMatch && searchMatch;
+        });
+    }, [students, studentFilterClass, studentFilterSection, studentSearchQuery]);
+    
+    const filteredResults = useMemo(() => {
+        const lowercasedQuery = resultSearchQuery.toLowerCase();
+        return results.filter(result => {
+            const classMatch = filterClass === 'all' || result.className === filterClass;
+            const statusMatch = filterStatus === 'all' || result.status === filterStatus;
+            const searchMatch = !resultSearchQuery ||
+                result.studentName.toLowerCase().includes(lowercasedQuery) ||
+                result.rollNumber.toLowerCase().includes(lowercasedQuery);
+            return classMatch && statusMatch && searchMatch;
+        });
+    }, [results, filterClass, filterStatus, resultSearchQuery]);
+    
+    const { items: sortedStudents, requestSort: requestStudentSort, sortConfig: studentSortConfig } = useSortableData(filteredStudents, { key: 'registeredAt', direction: 'desc' });
+    const { items: sortedResults, requestSort: requestResultSort, sortConfig: resultSortConfig } = useSortableData(filteredResults, { key: 'submittedAt', direction: 'desc' });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -231,7 +280,11 @@ const AdminPanel: React.FC = () => {
                 setResults(resultsData);
                 setManualQuestions(questionsData);
             } catch (err) {
-                setError("Failed to fetch admin data.");
+                 if (err instanceof Error) {
+                    setError(`Failed to fetch admin data: ${err.message}`);
+                } else {
+                    setError("An unknown error occurred while fetching admin data.");
+                }
             } finally {
                 setLoading(false);
             }
@@ -244,7 +297,7 @@ const AdminPanel: React.FC = () => {
             setIsAuthenticated(true);
             setLoginError('');
         } else {
-            setLoginError('Invalid username or password.');
+            setLoginError('Incorrect username or password.');
         }
     };
     
@@ -256,31 +309,129 @@ const AdminPanel: React.FC = () => {
     };
 
     const handleQuestionSave = async (question: Question) => {
+        if (!selectedClass) return;
         const classQuestions = manualQuestions[selectedClass] || [];
         let updatedQuestions;
         if (editingQuestion) {
-            updatedQuestions = classQuestions.map(q => q.id === question.id ? question : q);
+            updatedQuestions = classQuestions.map(q => q.id === editingQuestion.id ? { ...question, id: editingQuestion.id } : q);
         } else {
             updatedQuestions = [...classQuestions, { ...question, id: `q-${Date.now()}` }];
         }
-        setLoading(true);
-        await apiService.saveQuestionsForClass(selectedClass, updatedQuestions);
-        const updatedDB = await apiService.getManualQuestions();
-        setManualQuestions(updatedDB);
-        setLoading(false);
-        setIsEditorOpen(false);
-        setEditingQuestion(null);
+        
+        try {
+            setLoading(true);
+            await apiService.saveQuestionsForClass(selectedClass, updatedQuestions);
+            const updatedDB = await apiService.getManualQuestions();
+            setManualQuestions(updatedDB);
+        } catch (err) {
+             if (err instanceof Error) {
+                setError(`Failed to save question: ${err.message}`);
+            } else {
+                setError("An unknown error occurred while saving the question.");
+            }
+        } finally {
+            setLoading(false);
+            setIsEditorOpen(false);
+            setEditingQuestion(null);
+        }
     };
 
     const handleQuestionDelete = async (questionId: string) => {
         if (window.confirm('Are you sure you want to delete this question?')) {
             const classQuestions = manualQuestions[selectedClass] || [];
             const updatedQuestions = classQuestions.filter(q => q.id !== questionId);
-            setLoading(true);
-            await apiService.saveQuestionsForClass(selectedClass, updatedQuestions);
-            const updatedDB = await apiService.getManualQuestions();
-            setManualQuestions(updatedDB);
-            setLoading(false);
+             try {
+                setLoading(true);
+                await apiService.saveQuestionsForClass(selectedClass, updatedQuestions);
+                const updatedDB = await apiService.getManualQuestions();
+                setManualQuestions(updatedDB);
+            } catch (err) {
+                 if (err instanceof Error) {
+                    setError(`Failed to delete question: ${err.message}`);
+                } else {
+                    setError("An unknown error occurred while deleting the question.");
+                }
+            } finally {
+                setLoading(false);
+            }
+        }
+    };
+
+    const handleExport = (format: 'csv' | 'excel') => {
+        const headers = ["Name", "Class", "Section", "Roll No.", "Score", "Answered", "Total Questions", "Status", "Submitted At"];
+        const rows = sortedResults.map(result => [
+            `"${result.studentName.replace(/"/g, '""')}"`, // Handle quotes in name
+            result.className,
+            result.section,
+            result.rollNumber,
+            result.score,
+            result.answeredQuestions,
+            result.totalQuestions,
+            result.status,
+            `"${new Date(result.submittedAt).toLocaleString()}"`
+        ].join(','));
+
+        // For Excel (UTF-8 with BOM)
+        const BOM = "\uFEFF";
+        const csvContent = BOM + [headers.join(','), ...rows].join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        if (link.href) {
+            URL.revokeObjectURL(link.href);
+        }
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.setAttribute('download', `exam_results.${format === 'excel' ? 'csv' : 'csv'}`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const handlePrint = () => {
+        const headers = ["Name", "Class", "Section", "Roll No.", "Score", "Status", "Submitted At"];
+        const rows = sortedResults.map(result => `
+            <tr>
+                <td>${result.studentName}</td>
+                <td>${result.className}</td>
+                <td>${result.section}</td>
+                <td>${result.rollNumber}</td>
+                <td>${result.score}/${result.totalQuestions}</td>
+                <td><span class="${result.status === 'Pass' ? 'status-pass' : 'status-fail'}">${result.status}</span></td>
+                <td>${new Date(result.submittedAt).toLocaleString()}</td>
+            </tr>
+        `).join('');
+
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Exam Results - ${new Date().toLocaleDateString()}</title>
+                        <style>
+                            body { font-family: sans-serif; margin: 20px; }
+                            table { width: 100%; border-collapse: collapse; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                            th { background-color: #f2f2f2; }
+                            h1 { text-align: center; margin-bottom: 20px; }
+                            .status-pass { color: green; font-weight: bold; }
+                            .status-fail { color: red; font-weight: bold; }
+                            @media print {
+                                .no-print { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Exam Results</h1>
+                        <table>
+                            <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
         }
     };
 
@@ -300,70 +451,136 @@ const AdminPanel: React.FC = () => {
 
     const renderContent = () => {
         if (loading) return <Spinner message="Loading admin data..." />;
-        if (error) return <p className="text-center text-red-500">{error}</p>;
+        if (error) return <p className="text-center text-red-500 p-4">{error}</p>;
 
         if (view === 'students') {
              return (
-                <div className="shadow overflow-hidden border-b border-slate-200 sm:rounded-lg">
-                    <table className="min-w-full divide-y divide-slate-200">
-                        <thead className="bg-slate-50">
-                            <tr>
-                                <ThWithSort sortKey="name" label="Name" requestSort={requestStudentSort} sortConfig={studentSortConfig} />
-                                <ThWithSort sortKey="className" label="Class" requestSort={requestStudentSort} sortConfig={studentSortConfig} />
-                                <ThWithSort sortKey="section" label="Section" requestSort={requestStudentSort} sortConfig={studentSortConfig} />
-                                <ThWithSort sortKey="rollNumber" label="Roll No." requestSort={requestStudentSort} sortConfig={studentSortConfig} />
-                                <ThWithSort sortKey="registeredAt" label="Registered At" requestSort={requestStudentSort} sortConfig={studentSortConfig} />
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-slate-200">
-                            {sortedStudents.map((student) => (
-                                <tr key={student.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{student.name}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{student.className}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{student.section}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{student.rollNumber}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{new Date(student.registeredAt).toLocaleString()}</td>
+                 <div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-center mb-4 p-4 bg-slate-50 rounded-lg border">
+                        <div>
+                            <label htmlFor="student-search-filter" className="text-sm font-medium text-slate-700 block mb-1">Search Student:</label>
+                            <input
+                                id="student-search-filter"
+                                type="text"
+                                placeholder="By name or roll no..."
+                                value={studentSearchQuery}
+                                onChange={e => setStudentSearchQuery(e.target.value)}
+                                className="p-2 w-full border border-slate-300 rounded-md"
+                                aria-label="Search students"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="student-class-filter" className="text-sm font-medium text-slate-700 block mb-1">Filter by Class:</label>
+                            <select id="student-class-filter" value={studentFilterClass} onChange={e => setStudentFilterClass(e.target.value)} className="p-2 w-full border border-slate-300 rounded-md">
+                                <option value="all">All Classes</option>
+                                {CLASSES.map(c => <option key={c} value={c}>Class {c}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="student-section-filter" className="text-sm font-medium text-slate-700 block mb-1">Filter by Section:</label>
+                            <select id="student-section-filter" value={studentFilterSection} onChange={e => setStudentFilterSection(e.target.value)} className="p-2 w-full border border-slate-300 rounded-md">
+                                <option value="all">All Sections</option>
+                                {SECTIONS.map(s => <option key={s} value={s}>Section {s}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    <div className="shadow overflow-x-auto border-b border-slate-200 sm:rounded-lg">
+                        <table className="min-w-full divide-y divide-slate-200">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <ThWithSort sortKey="name" label="Name" requestSort={requestStudentSort} sortConfig={studentSortConfig} />
+                                    <ThWithSort sortKey="className" label="Class" requestSort={requestStudentSort} sortConfig={studentSortConfig} />
+                                    <ThWithSort sortKey="section" label="Section" requestSort={requestStudentSort} sortConfig={studentSortConfig} />
+                                    <ThWithSort sortKey="rollNumber" label="Roll No." requestSort={requestStudentSort} sortConfig={studentSortConfig} />
+                                    <ThWithSort sortKey="registeredAt" label="Registered At" requestSort={requestStudentSort} sortConfig={studentSortConfig} />
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-slate-200">
+                                {sortedStudents.map((student) => (
+                                    <tr key={student.id}>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{student.name}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{student.className}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{student.section}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{student.rollNumber}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{new Date(student.registeredAt).toLocaleString()}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                 </div>
             );
         }
 
         if (view === 'results') {
             return (
-                 <div className="shadow overflow-hidden border-b border-slate-200 sm:rounded-lg">
-                    <table className="min-w-full divide-y divide-slate-200">
-                        <thead className="bg-slate-50">
-                            <tr>
-                                <ThWithSort sortKey="studentName" label="Name" requestSort={requestResultSort} sortConfig={resultSortConfig} />
-                                <ThWithSort sortKey="className" label="Class" requestSort={requestResultSort} sortConfig={resultSortConfig} />
-                                <ThWithSort sortKey="rollNumber" label="Roll No." requestSort={requestResultSort} sortConfig={resultSortConfig} />
-                                <ThWithSort sortKey="score" label="Score" requestSort={requestResultSort} sortConfig={resultSortConfig} />
-                                <ThWithSort sortKey="answeredQuestions" label="Answered" requestSort={requestResultSort} sortConfig={resultSortConfig} />
-                                <ThWithSort sortKey="status" label="Status" requestSort={requestResultSort} sortConfig={resultSortConfig} />
-                                <ThWithSort sortKey="submittedAt" label="Submitted At" requestSort={requestResultSort} sortConfig={resultSortConfig} />
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-slate-200">
-                            {sortedResults.map((result) => (
-                                <tr key={result.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{result.studentName}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{result.className}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{result.rollNumber}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 font-bold">{result.score} / {result.totalQuestions}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{result.answeredQuestions} / {result.totalQuestions}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${result.status === 'Pass' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                            {result.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{new Date(result.submittedAt).toLocaleString()}</td>
+                <div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-center mb-4 p-4 bg-slate-50 rounded-lg border">
+                         <div>
+                            <label htmlFor="search-filter" className="text-sm font-medium text-slate-700 block mb-1">Search Student:</label>
+                            <input
+                                id="search-filter"
+                                type="text"
+                                placeholder="By name or roll no..."
+                                value={resultSearchQuery}
+                                onChange={e => setResultSearchQuery(e.target.value)}
+                                className="p-2 w-full border border-slate-300 rounded-md"
+                                aria-label="Search results"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="class-filter" className="text-sm font-medium text-slate-700 block mb-1">Filter by Class:</label>
+                            <select id="class-filter" value={filterClass} onChange={e => setFilterClass(e.target.value)} className="p-2 w-full border border-slate-300 rounded-md">
+                                <option value="all">All Classes</option>
+                                {CLASSES.map(c => <option key={c} value={c}>Class {c}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="status-filter" className="text-sm font-medium text-slate-700 block mb-1">Filter by Status:</label>
+                            <select id="status-filter" value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)} className="p-2 w-full border border-slate-300 rounded-md">
+                                <option value="all">All Statuses</option>
+                                <option value="Pass">Pass</option>
+                                <option value="Fail">Fail</option>
+                            </select>
+                        </div>
+                        <div className="flex flex-wrap gap-2 items-end justify-end pt-5">
+                             <button onClick={() => handleExport('csv')} className="py-2 px-3 rounded-md text-white bg-green-600 hover:bg-green-700 text-sm">Export CSV</button>
+                             <button onClick={() => handleExport('excel')} className="py-2 px-3 rounded-md text-white bg-blue-600 hover:bg-blue-700 text-sm">Export Excel</button>
+                             <button onClick={handlePrint} className="py-2 px-3 rounded-md text-white bg-slate-600 hover:bg-slate-700 text-sm">Print Results</button>
+                        </div>
+                    </div>
+                     <div className="shadow overflow-x-auto border-b border-slate-200 sm:rounded-lg">
+                        <table className="min-w-full divide-y divide-slate-200">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <ThWithSort sortKey="studentName" label="Name" requestSort={requestResultSort} sortConfig={resultSortConfig} />
+                                    <ThWithSort sortKey="className" label="Class" requestSort={requestResultSort} sortConfig={resultSortConfig} />
+                                    <ThWithSort sortKey="rollNumber" label="Roll No." requestSort={requestResultSort} sortConfig={resultSortConfig} />
+                                    <ThWithSort sortKey="score" label="Score" requestSort={requestResultSort} sortConfig={resultSortConfig} />
+                                    <ThWithSort sortKey="answeredQuestions" label="Answered" requestSort={requestResultSort} sortConfig={resultSortConfig} />
+                                    <ThWithSort sortKey="status" label="Status" requestSort={requestResultSort} sortConfig={resultSortConfig} />
+                                    <ThWithSort sortKey="submittedAt" label="Submitted At" requestSort={requestResultSort} sortConfig={resultSortConfig} />
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-slate-200">
+                                {sortedResults.map((result) => (
+                                    <tr key={result.id}>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{result.studentName}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{result.className}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{result.rollNumber}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 font-bold">{result.score} / {result.totalQuestions}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{result.answeredQuestions} / {result.totalQuestions}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${result.status === 'Pass' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                {result.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{new Date(result.submittedAt).toLocaleString()}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             );
         }
@@ -386,7 +603,7 @@ const AdminPanel: React.FC = () => {
                     </div>
                     {selectedClass ? (
                         <div className="space-y-4">
-                            <p className="text-sm text-slate-600">
+                            <p className={`text-sm mb-4 p-2 rounded-md ${classQuestions.length < TOTAL_QUESTIONS ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
                                 {classQuestions.length} / {TOTAL_QUESTIONS} questions set. Students can only take the exam when {TOTAL_QUESTIONS} questions are available.
                             </p>
                             {classQuestions.map((q, index) => (

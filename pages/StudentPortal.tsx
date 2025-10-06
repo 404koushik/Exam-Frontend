@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Student, Question, ExamResult, StudentRegistration } from '../types';
 import { CLASSES, SECTIONS, EXAM_DURATION_MINUTES, TOTAL_QUESTIONS } from '../constants';
@@ -20,30 +21,30 @@ const StudentRegistrationForm: React.FC<{ onSubmit: (details: StudentRegistratio
 
     return (
         <div className="bg-white p-8 rounded-lg shadow-md max-w-lg mx-auto">
-            <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">Student Registration</h2>
+            <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">ছাত্র ছাত্রী নিবন্ধন</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-slate-700">Full Name</label>
+                    <label htmlFor="name" className="block text-sm font-medium text-slate-700">পুরো নাম</label>
                     <input type="text" id="name" value={details.name} onChange={e => setDetails({...details, name: e.target.value})} className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-slate-500 focus:border-slate-500" required />
                 </div>
                 <div>
-                    <label htmlFor="className" className="block text-sm font-medium text-slate-700">Class</label>
+                    <label htmlFor="className" className="block text-sm font-medium text-slate-700">শ্রেণী</label>
                     <select id="className" value={details.className} onChange={e => setDetails({...details, className: e.target.value})} className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-slate-500 focus:border-slate-500">
                         {CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                 </div>
                 <div>
-                    <label htmlFor="section" className="block text-sm font-medium text-slate-700">Section</label>
+                    <label htmlFor="section" className="block text-sm font-medium text-slate-700">বিভাগ</label>
                     <select id="section" value={details.section} onChange={e => setDetails({...details, section: e.target.value})} className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-slate-500 focus:border-slate-500">
                         {SECTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                 </div>
                  <div>
-                    <label htmlFor="rollNumber" className="block text-sm font-medium text-slate-700">Roll Number</label>
+                    <label htmlFor="rollNumber" className="block text-sm font-medium text-slate-700">রোল নম্বর</label>
                     <input type="text" id="rollNumber" value={details.rollNumber} onChange={e => setDetails({...details, rollNumber: e.target.value})} className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-slate-500 focus:border-slate-500" required />
                 </div>
                 <button type="submit" disabled={loading} className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 disabled:bg-slate-400">
-                    {loading ? 'Registering...' : 'Register & Proceed'}
+                    {loading ? 'যাচাই করা হচ্ছে...' : 'নিবন্ধন করে এগিয়ে যান'}
                 </button>
             </form>
         </div>
@@ -52,17 +53,17 @@ const StudentRegistrationForm: React.FC<{ onSubmit: (details: StudentRegistratio
 
 const ExamInstructions: React.FC<{ student: Student; onStart: () => void }> = ({ student, onStart }) => (
     <div className="bg-white p-8 rounded-lg shadow-md max-w-xl mx-auto text-center">
-        <h2 className="text-3xl font-bold text-slate-800 mb-4">Hello, {student.name}!</h2>
-        <p className="text-slate-600 mb-6">Welcome to your exam. Please read the instructions carefully.</p>
+        <h2 className="text-3xl font-bold text-slate-800 mb-4">নমস্কার, {student.name}!</h2>
+        <p className="text-slate-600 mb-6">আপনার পরীক্ষায় স্বাগতম। অনুগ্রহ করে নির্দেশাবলী মনোযোগ দিয়ে পড়ুন।</p>
         <ul className="text-left space-y-3 list-disc list-inside bg-slate-50 p-6 rounded-md mb-8">
-            <li>Total Questions: <strong>{TOTAL_QUESTIONS}</strong></li>
-            <li>Time Limit: <strong>{EXAM_DURATION_MINUTES} minutes</strong></li>
-            <li>Each question carries 1 mark.</li>
-            <li>There is no negative marking.</li>
-            <li>The exam will be submitted automatically when the time runs out.</li>
+            <li>মোট প্রশ্ন: <strong>{TOTAL_QUESTIONS}</strong></li>
+            <li>সময় সীমা: <strong>{EXAM_DURATION_MINUTES} মিনিট</strong></li>
+            <li>প্রতিটি প্রশ্নের জন্য ১ নম্বর।</li>
+            <li>কোনো নেগেটিভ মার্কিং নেই।</li>
+            <li>সময় শেষ হয়ে গেলে পরীক্ষা স্বয়ংক্রিয়ভাবে জমা হয়ে যাবে।</li>
         </ul>
         <button onClick={onStart} className="w-full py-3 px-4 rounded-md shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-            Start Exam
+            পরীক্ষা শুরু করুন
         </button>
     </div>
 );
@@ -70,11 +71,11 @@ const ExamInstructions: React.FC<{ student: Student; onStart: () => void }> = ({
 const ConfirmationModal: React.FC<{ onConfirm: () => void; onCancel: () => void; }> = ({ onConfirm, onCancel }) => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white p-8 rounded-lg shadow-2xl max-w-sm w-full text-center">
-            <h3 className="text-xl font-bold text-slate-800 mb-4">Confirm Submission</h3>
-            <p className="text-slate-600 mb-6">Are you sure you want to submit the exam?</p>
+            <h3 className="text-xl font-bold text-slate-800 mb-4">জমা দেওয়ার বিষয়টি নিশ্চিত করুন</h3>
+            <p className="text-slate-600 mb-6">আপনি কি পরীক্ষা জমা দিতে চান?</p>
             <div className="flex justify-center gap-4">
-                <button onClick={onCancel} className="py-2 px-6 rounded-md text-slate-700 bg-slate-200 hover:bg-slate-300">Cancel</button>
-                <button onClick={onConfirm} className="py-2 px-6 rounded-md text-white bg-green-600 hover:bg-green-700">Yes, Submit</button>
+                <button onClick={onCancel} className="py-2 px-6 rounded-md text-slate-700 bg-slate-200 hover:bg-slate-300">বাতিল করুন</button>
+                <button onClick={onConfirm} className="py-2 px-6 rounded-md text-white bg-green-600 hover:bg-green-700">হ্যাঁ, জমা দিন</button>
             </div>
         </div>
     </div>
@@ -127,9 +128,9 @@ const ExamView: React.FC<{ student: Student; questions: Question[]; onSubmit: (a
             <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
                 <div className="flex-grow bg-white p-6 md:p-8 rounded-lg shadow-md lg:order-1 order-2">
                     <div className="flex justify-between items-center mb-6 border-b pb-4">
-                        <h2 className="text-xl font-bold text-slate-800">Question {currentQIndex + 1}/{questions.length}</h2>
+                        <h2 className="text-xl font-bold text-slate-800">প্রশ্ন {currentQIndex + 1}/{questions.length}</h2>
                         <div className={`text-lg font-bold px-3 py-1 rounded-md ${timeLeft < 60 ? 'text-red-600 bg-red-100' : 'text-slate-700 bg-slate-100'}`}>
-                            Time Left: {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                            বাকি সময়: {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
                         </div>
                     </div>
                     <p className="text-lg text-slate-700 mb-6 min-h-[60px]">{currentQuestion.question}</p>
@@ -141,22 +142,22 @@ const ExamView: React.FC<{ student: Student; questions: Question[]; onSubmit: (a
                         ))}
                     </div>
                     <div className="flex justify-between mt-8 pt-4 border-t">
-                        <button onClick={() => setCurrentQIndex(i => i - 1)} disabled={currentQIndex === 0} className="py-2 px-6 rounded-md text-white bg-slate-500 hover:bg-slate-600 disabled:bg-slate-300">Previous</button>
-                        <button onClick={() => setCurrentQIndex(i => i + 1)} disabled={currentQIndex === questions.length - 1} className="py-2 px-6 rounded-md text-white bg-slate-500 hover:bg-slate-600 disabled:bg-slate-300">Next</button>
+                        <button onClick={() => setCurrentQIndex(i => i - 1)} disabled={currentQIndex === 0} className="py-2 px-6 rounded-md text-white bg-slate-500 hover:bg-slate-600 disabled:bg-slate-300">পূর্ববর্তী</button>
+                        <button onClick={() => setCurrentQIndex(i => i + 1)} disabled={currentQIndex === questions.length - 1} className="py-2 px-6 rounded-md text-white bg-slate-500 hover:bg-slate-600 disabled:bg-slate-300">পরবর্তী</button>
                     </div>
                 </div>
 
                 <div className="lg:w-80 flex-shrink-0 order-1 lg:order-2">
                     <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-                        <h3 className="text-xl font-bold text-slate-800 border-b pb-2 mb-4">Student Details</h3>
+                        <h3 className="text-xl font-bold text-slate-800 border-b pb-2 mb-4">ছাত্র ছাত্রীর বিবরণ</h3>
                         <div className="space-y-2 text-slate-600">
-                            <p><strong>Name:</strong> {student.name}</p>
-                            <p><strong>Class:</strong> {student.className} - {student.section}</p>
-                            <p><strong>Roll No:</strong> {student.rollNumber}</p>
+                            <p><strong>নাম:</strong> {student.name}</p>
+                            <p><strong>শ্রেণী:</strong> {student.className} - {student.section}</p>
+                            <p><strong>রোল নং:</strong> {student.rollNumber}</p>
                         </div>
                     </div>
                     <div className="bg-white p-6 rounded-lg shadow-md">
-                        <h3 className="text-lg font-bold text-slate-800 mb-4">Question Palette</h3>
+                        <h3 className="text-lg font-bold text-slate-800 mb-4">প্রশ্ন প্যালেট</h3>
                         <div className="grid grid-cols-5 gap-2">
                             {questions.map((_, index) => (
                                 <button key={index} onClick={() => setCurrentQIndex(index)} className={`flex items-center justify-center h-10 w-10 rounded-md font-bold text-white transition-transform transform hover:scale-110 border-b-4 ${getQuestionStatusClass(index)}`}>
@@ -165,13 +166,13 @@ const ExamView: React.FC<{ student: Student; questions: Question[]; onSubmit: (a
                             ))}
                         </div>
                         <div className="mt-6 border-t pt-4 text-sm text-slate-600 space-y-2">
-                            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-green-500"></div><span>Answered</span></div>
-                            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-red-500"></div><span>Not Answered</span></div>
-                            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-yellow-400"></div><span>Current Question</span></div>
+                            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-green-500"></div><span>উত্তর দেওয়া হয়েছে</span></div>
+                            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-red-500"></div><span>উত্তর দেওয়া হয়নি</span></div>
+                            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-yellow-400"></div><span>বর্তমান প্রশ্ন</span></div>
                         </div>
                     </div>
                      <button onClick={() => setShowSubmitConfirm(true)} className="mt-6 w-full py-3 px-4 rounded-md shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                        Submit Exam
+                        পরীক্ষা জমা দিন
                     </button>
                 </div>
             </div>
@@ -182,27 +183,27 @@ const ExamView: React.FC<{ student: Student; questions: Question[]; onSubmit: (a
 
 const SubmissionCompleteView: React.FC<{ studentName: string; onRestart: () => void }> = ({ studentName, onRestart }) => (
     <div className="bg-white p-8 rounded-lg shadow-md max-w-lg mx-auto text-center">
-        <h2 className="text-3xl font-bold text-slate-800 mb-4">Exam Submitted!</h2>
+        <h2 className="text-3xl font-bold text-slate-800 mb-4">পরীক্ষা জমা দেওয়া হয়েছে!</h2>
         <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 text-green-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <p className="text-slate-600 mb-8 text-lg">
-            Thank you, <strong>{studentName}</strong>. Your submission has been received successfully.
+            ধন্যবাদ, <strong>{studentName}</strong>। আপনার উত্তরপত্র সফলভাবে জমা দেওয়া হয়েছে।
             <br />
-            Results will be announced by the administration later.
+            ফলাফল পরে প্রশাসন দ্বারা ঘোষণা করা হবে।
         </p>
          <button onClick={onRestart} className="w-full py-3 px-4 rounded-md shadow-sm text-lg font-medium text-white bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500">
-            Take Another Exam
+            অন্য পরীক্ষা দিন
         </button>
     </div>
 );
 
 const ErrorDisplay: React.FC<{ message: string; onRetry: () => void }> = ({ message, onRetry }) => (
      <div className="bg-red-50 p-8 rounded-lg shadow-md max-w-lg mx-auto text-center border border-red-200">
-        <h2 className="text-2xl font-bold text-red-800 mb-4">An Error Occurred</h2>
+        <h2 className="text-2xl font-bold text-red-800 mb-4">একটি ত্রুটি ঘটেছে</h2>
         <p className="text-red-700 mb-6">{message}</p>
          <button onClick={onRetry} className="py-2 px-6 rounded-md text-white bg-red-600 hover:bg-red-700">
-            Try Again
+            আবার চেষ্টা করুন
         </button>
     </div>
 );
@@ -220,18 +221,42 @@ const StudentPortal: React.FC = () => {
     const handleRegistration = async (details: StudentRegistration) => {
         setLoading(true);
         setError('');
-        setStage('generating');
         try {
-            const registeredStudent = await apiService.registerStudent(details);
-            setStudent(registeredStudent);
+            const [existingStudents, existingResults] = await Promise.all([
+                apiService.getStudents(),
+                apiService.getResults()
+            ]);
+
+            const existingStudent = existingStudents.find(
+                s => 
+                    s.className === details.className &&
+                    s.section === details.section &&
+                    s.rollNumber.trim().toLowerCase() === details.rollNumber.trim().toLowerCase()
+            );
+
+            let studentToProceed: Student;
+
+            if (existingStudent) {
+                const hasSubmitted = existingResults.some(r => r.studentId === existingStudent.id);
+                if (hasSubmitted) {
+                    throw new Error(`আপনি ইতিমধ্যে পরীক্ষাটি সম্পন্ন করেছেন। যদি আপনি মনে করেন এটি একটি ভুল, অনুগ্রহ করে প্রশাসকের সাথে যোগাযোগ করুন।`);
+                }
+                studentToProceed = existingStudent;
+            } else {
+                studentToProceed = await apiService.registerStudent(details);
+            }
+            
+            setStage('generating');
+            setStudent(studentToProceed);
+            
             const fetchedQuestions = await apiService.getQuestionsForClass(details.className);
             if (fetchedQuestions.length < TOTAL_QUESTIONS) {
-                throw new Error(`The exam for Class ${details.className} is not yet available or has fewer than ${TOTAL_QUESTIONS} questions. Please contact the administrator.`);
+                throw new Error(`শ্রেণী ${details.className}-এর জন্য পরীক্ষা এখনও উপলব্ধ নয় বা এতে ${TOTAL_QUESTIONS}-টির কম প্রশ্ন রয়েছে। অনুগ্রহ করে প্রশাসকের সাথে যোগাযোগ করুন।`);
             }
             setQuestions(fetchedQuestions);
             setStage('instructions');
         } catch (err: any) {
-            setError(err.message || 'An unknown error occurred during setup.');
+            setError(err.message || 'সেটআপের সময় একটি অজানা ত্রুটি ঘটেছে।');
             setStage('error');
         } finally {
             setLoading(false);
@@ -245,7 +270,7 @@ const StudentPortal: React.FC = () => {
             await apiService.submitResult(student, questions, answers);
             setStage('result');
         } catch (err: any) {
-            setError(err.message || 'Failed to submit your exam.');
+            setError(err.message || 'আপনার পরীক্ষা জমা দিতে ব্যর্থ হয়েছে।');
             setStage('error');
         }
     };
@@ -263,13 +288,13 @@ const StudentPortal: React.FC = () => {
             case 'registration':
                 return <StudentRegistrationForm onSubmit={handleRegistration} loading={loading} />;
             case 'generating':
-                return <Spinner message="Loading your exam..." />;
+                return <Spinner message="আপনার পরীক্ষার জন্য লোড হচ্ছে..." />;
             case 'instructions':
                 return student && <ExamInstructions student={student} onStart={() => setStage('exam')} />;
             case 'exam':
                 return student && questions.length > 0 && <ExamView student={student} questions={questions} onSubmit={handleExamSubmit} />;
             case 'submitting':
-                return <Spinner message="Submitting your answers..." />;
+                return <Spinner message="আপনার উত্তর জমা দেওয়া হচ্ছে..." />;
             case 'result':
                 return student && <SubmissionCompleteView studentName={student.name} onRestart={resetPortal} />;
             case 'error':
